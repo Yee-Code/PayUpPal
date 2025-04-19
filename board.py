@@ -5,20 +5,19 @@ from base import Square
 def initialize_board() -> List[Square]:
     board = [
         Square("起點"),
-        Square("台北", color="紅色", price=600, tolls=[50, 100, 150, 200, 250], house_cost=1500),
+        Square("台北", color="紅色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
         # Square("機會"),
         # Square("命運"),
         Square("監獄"),
-        Square("台南", color="綠色", price=500, tolls=[50, 100, 150, 200, 250], house_cost=1300),
-        Square("高雄", color="藍色", price=400, tolls=[50, 100, 150, 200, 250], house_cost=1200),
+        Square("台南", color="綠色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
+        Square("高雄", color="藍色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
         # Square("機會"),
-        Square("花蓮", color="黃色", price=300, tolls=[50, 100, 150, 200, 250], house_cost=1100),
-        Square("台東", color="紫色", price=200, tolls=[50, 100, 150, 200, 250], house_cost=1000),
+        Square("花蓮", color="黃色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
+        Square("台東", color="紫色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
         # Square("命運"),
-        Square("澎湖", color="橘色", price=100, tolls=[50, 100, 150, 200, 250], house_cost=900),
-        Square("基隆", color="紅色", price=600, tolls=[50, 100, 150, 200, 250], house_cost=1500),
+        Square("澎湖", color="橘色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
+        Square("基隆", color="紅色", price=600, tolls=[220, 1500, 3000, 6000, 12000], house_cost=2000),
         Square("監獄"),
-
 
     ]
 

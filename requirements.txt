@@ -1,4 +1,6 @@
+jupyterlab
 python-telegram-bot==22
 python-dotenv==1.1.0
 requests==2.32.3
 aiohttp==3.11.14
+firebase-admin>=6.0.0,<7.0.0

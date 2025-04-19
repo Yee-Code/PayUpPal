@@ -23,7 +23,6 @@ class GameState:
         self.current_player_index = 0
         self.board: List[Square] = initialize_board()
         self.board_dict: Dict[str, Square] = {square.name: square for square in self.board}
-        self.host_id = None  # 房主 user_id
         self.message_handler = message_handler  # 訊息處理器
         self.ledger = {}  # 紀錄玩家的交易紀錄
         self.rolled = False  # 是否已經擲骰子
@@ -66,10 +65,6 @@ class GameState:
             player = Player(name, user_id)
             self.players.append(player)
             self.player_dict[user_id] = player
-            
-            # 設定房主
-            if len(self.players) == 1:
-                self.host_id = user_id
 
             await self.message_handler(f"{name} 加入遊戲！")
         else:
@@ -507,12 +502,102 @@ class GameState:
         self.player_dict.clear()
         self.started = False
         self.current_player_index = 0
-        self.host_id = None
         self.ledger.clear()
         self.rolled = False
         for square in self.board:
             square.reset()
         await self.message_handler("遊戲已重置！")
+
+    def to_dict(self):
+        """將 GameState 轉為可序列化 dict"""
+        return {
+            'players': [self._player_to_dict(p) for p in self.players],
+            'started': self.started,
+            'current_player_index': self.current_player_index,
+            'board': [self._square_to_dict(s) for s in self.board],
+            'ledger': self._ledger_to_dict(self.ledger),
+            'rolled': self.rolled,
+            'double_confirm': self.double_confirm
+        }
+
+    @staticmethod
+    def from_dict(data, message_handler):
+        """從 dict 還原 GameState 物件"""
+        obj = GameState(message_handler)
+        obj.players = [obj._player_from_dict(p) for p in data['players']]
+        obj.player_dict = {p.user_id: p for p in obj.players}
+        obj.started = data['started']
+        obj.current_player_index = data['current_player_index']
+        obj.board = [obj._square_from_dict(s) for s in data['board']]
+        obj.board_dict = {s.name: s for s in obj.board}
+        obj.ledger = obj._ledger_from_dict(data['ledger'], obj.player_dict)
+        obj.rolled = data['rolled']
+        obj.double_confirm = data['double_confirm']
+
+        # id 轉為 物件 
+        for p in obj.players:
+            p.properties = {name: obj.board_dict[name] for name in p.properties if name in obj.board_dict}
+            p.mortgage_properties = {name: obj.board_dict[name] for name in p.mortgage_properties if name in obj.board_dict}
+        for s in obj.board:
+            if s.owner:
+                s.owner = obj.player_dict[s.owner]
+        if obj.ledger:
+            obj.ledger['from'] = obj.player_dict[obj.ledger['from']]
+            obj.ledger['to'] = obj.player_dict[obj.ledger['to']]
+        return obj
+
+    def _player_to_dict(self, player):
+        # 使用 vars() 方式簡化 player 轉 dict
+        d = vars(player).copy()
+        d['properties'] = list(player.properties.keys())  # 轉為 id 之後再從 id 轉回物件字典
+        d['mortgage_properties'] = list(player.mortgage_properties.keys())
+        return d
+
+    def _player_from_dict(self, data):
+        p = Player(data['name'], data['user_id'])
+        for k, v in data.items():
+            setattr(p, k, v)
+        # properties/mortgage_properties 會在 from_dict 裡處理成物件
+        return p
+
+    def _square_to_dict(self, square):
+        d = vars(square).copy()
+        d['type'] = square.type.name
+        d['owner'] = square.owner.user_id if square.owner else None
+        return d
+
+    def _square_from_dict(self, data):
+        s = Square(
+            name=data['name'],
+            color=data['color'],
+            price=data['_price'],
+            tolls=data['tolls'],
+            house_cost=data['house_cost']
+        )
+        s.type = SquareType[data['type']]
+        s.position = data['position']
+        s.level = data['level']
+        s.mortgaged = data['mortgaged']
+        s.owner = data['owner']  # wait for player_dict
+        return s
+
+    def _ledger_to_dict(self, ledger):
+        if not ledger:
+            return {}
+        return {
+            'from': ledger['from'].user_id,
+            'to': ledger['to'].user_id,
+            'amount': ledger['amount']
+        }
+
+    def _ledger_from_dict(self, data, player_dict):
+        if not data:
+            return {}
+        return {
+            'from': player_dict[data['from']],  # wait for player_dict
+            'to': player_dict[data['to']],      # wait for player_dict
+            'amount': data['amount']
+        }
 
 async def async_print(msg):
         print(msg)
